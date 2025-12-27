@@ -56,18 +56,18 @@ Replace `YOUR_USERNAME` with your GitHub username.
 1. Go to **Actions** tab in your repository
 2. You should see "Tech News Digest" workflow
 3. Click on it and you can manually trigger it with "Run workflow" button
-4. The workflow will automatically run every 2 days at 8:00 AM UTC
+4. The workflow will automatically run every 2 days at 8:00 AM Denver time (GMT-7)
 
 ## Schedule Timezone
 
-The workflow runs at **8:00 AM UTC**. To convert to your timezone:
+The workflow runs at **8:00 AM Denver time (Mountain Time, GMT-7)**.
 
-- UTC+1 (CET): 9:00 AM
-- UTC+2 (CEST): 10:00 AM
-- UTC-5 (EST): 3:00 AM
-- UTC-8 (PST): 12:00 AM (midnight)
+- **During Standard Time (MST):** 8:00 AM Denver = 3:00 PM UTC (15:00 UTC)
+- **During Daylight Saving Time (MDT):** 8:00 AM Denver = 2:00 PM UTC (14:00 UTC)
 
-To change the time, edit `.github/workflows/schedule.yml` and modify the cron schedule.
+**Note:** The current schedule is set for standard time. During daylight saving time (approximately March-November), it will run at 9:00 AM Denver time instead of 8:00 AM.
+
+To change the time or timezone, edit `.github/workflows/schedule.yml` and modify the cron schedule.
 
 ## Troubleshooting
 

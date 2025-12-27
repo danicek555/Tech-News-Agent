@@ -6,19 +6,21 @@ Automated tech news aggregator that collects the latest tech news and sends it v
 
 - 🔍 Web search for latest tech news
 - 📧 Automated email delivery
-- 📅 Scheduled runs (every 2 days at 8 AM)
+- 📅 Scheduled runs (every 2 days at 8:00 AM Denver time)
 - 🌍 Multi-language support (English/Czech)
 - 🎯 Customizable topics and filters
 
 ## Setup
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Configure environment variables:**
    Create a `.env` file with the following variables:
+
    ```env
    # Required
    OPENAI_API_KEY=your_openai_api_key_here
@@ -41,24 +43,26 @@ Automated tech news aggregator that collects the latest tech news and sends it v
 
 3. **For Gmail:**
    - Enable 2-Step Verification
-   - Generate an App Password: https://support.google.com/accounts/answer/185833
+   - Generate an App Password: https://myaccount.google.com/apppasswords?rapt=AEjHL4Nwaa6glzT81oUy24DmqdVh-jMBYh7bLKjnWDqGFAK5gXxjnvn4J1cjMkXwJMPP6dzQCb6mPTRi0vgl8HYoJRLHcHmfEv-SnNicHQngdvr1FhgHRn0
    - Use the App Password as `SMTP_PASSWORD`
 
 ## Usage
 
 **Run manually:**
+
 ```bash
 npm start
 ```
 
 **Run with custom input:**
+
 ```bash
 npm start "Find news about AI"
 ```
 
 ## GitHub Actions
 
-The workflow is configured to run every 2 days at 8:00 AM UTC. To set up:
+The workflow is configured to run every 2 days at 8:00 AM Denver time (GMT-7, which is 3:00 PM UTC). To set up:
 
 1. Push this repository to GitHub
 2. Go to Settings → Secrets and variables → Actions
@@ -70,4 +74,3 @@ The workflow is configured to run every 2 days at 8:00 AM UTC. To set up:
 - `digest.ts` - Main workflow file
 - `.github/workflows/schedule.yml` - GitHub Actions workflow
 - `package.json` - Dependencies and scripts
-
