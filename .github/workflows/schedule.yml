@@ -2,11 +2,12 @@ name: Tech News Digest
 
 on:
   schedule:
-    # Run every 2 days at 8:00 AM UTC
+    # Run every 2 days at 8:00 AM Denver time (GMT-7)
+    # 8 AM Denver = 3 PM UTC (15:00 UTC) during standard time
+    # Note: Denver uses MST (GMT-7) in winter, MDT (GMT-6) in summer
     # Cron format: minute hour day month day-of-week
-    # Runs on odd-numbered days (1, 3, 5, 7, etc.) at 8 AM UTC
-    # This approximates "every 2 days" behavior
-    - cron: "0 8 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31 * *"
+    # Runs on odd-numbered days (1, 3, 5, 7, etc.) at 3 PM UTC (8 AM Denver MST)
+    - cron: "0 15 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31 * *"
   workflow_dispatch: # Allow manual triggering
 
 jobs:

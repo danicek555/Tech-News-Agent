@@ -110,11 +110,12 @@ const formatEmailFromNews = (
     };
   }
 
-  // Get current date for subject
+  // Get current date for subject (in Denver timezone GMT-7)
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "America/Denver", // Use Denver timezone to get correct date
   });
 
   // Generate a concise subject from the first few items
