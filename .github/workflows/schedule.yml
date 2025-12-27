@@ -26,6 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check environment variables
+        run: |
+          echo "Checking required environment variables..."
+          echo "OPENAI_API_KEY: $([ -n "${{ secrets.OPENAI_API_KEY }}" ] && echo '✅ Set' || echo '❌ Missing')"
+          echo "SMTP_USER: $([ -n "${{ secrets.SMTP_USER }}" ] && echo '✅ Set' || echo '❌ Missing')"
+          echo "SMTP_PASSWORD: $([ -n "${{ secrets.SMTP_PASSWORD }}" ] && echo '✅ Set' || echo '❌ Missing')"
+          echo "RECIPIENT_EMAIL: $([ -n "${{ secrets.RECIPIENT_EMAIL }}" ] && echo '✅ Set' || echo '❌ Missing')"
+
       - name: Run tech news digest
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

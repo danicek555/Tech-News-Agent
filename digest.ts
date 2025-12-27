@@ -170,7 +170,12 @@ const sendEmail = async (
   // Verify transporter configuration
   if (!process.env.SMTP_USER) {
     throw new Error(
-      "SMTP_USER environment variable is required. Please set it in your .env file."
+      "SMTP_USER environment variable is required. Please set it in GitHub Secrets."
+    );
+  }
+  if (!process.env.SMTP_PASSWORD && !process.env.SMTP_APP_PASSWORD) {
+    throw new Error(
+      "SMTP_PASSWORD or SMTP_APP_PASSWORD environment variable is required. Please set it in GitHub Secrets."
     );
   }
 
@@ -191,6 +196,13 @@ type WorkflowInput = { input_as_text: string };
 // Main code entrypoint
 export const runWorkflow = async (workflow: WorkflowInput) => {
   return await withTrace("Tech news agent", async () => {
+    // Validate required environment variables
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error(
+        "OPENAI_API_KEY environment variable is required. Please set it in GitHub Secrets."
+      );
+    }
+
     const state = {
       language: process.env.LANGUAGE ?? "en",
       topics: parseTopics(process.env.TOPICS), // comma-separated
@@ -199,6 +211,14 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
       must_include_sources: parseBool(process.env.MUST_INCLUDE_SOURCES, true),
       recipient_email: process.env.RECIPIENT_EMAIL ?? "danmitka@gmail.com",
     };
+
+    console.log("Workflow state:", {
+      language: state.language,
+      topics: state.topics,
+      recency_hours: state.recency_hours,
+      max_items: state.max_items,
+      recipient_email: state.recipient_email,
+    });
 
     const conversationHistory: AgentInputItem[] = [
       {
@@ -261,11 +281,26 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
       );
       const emailSubject = emailContent.subject;
 
+      let emailSent = false;
       try {
-        await sendEmail(state.recipient_email, emailSubject, emailContent.body);
-        console.log(`Email sent to ${state.recipient_email}`);
+        if (!process.env.SMTP_USER) {
+          console.warn(
+            "⚠️  SMTP_USER not set. Skipping email send. Set SMTP secrets in GitHub to enable email."
+          );
+        } else {
+          await sendEmail(
+            state.recipient_email,
+            emailSubject,
+            emailContent.body
+          );
+          console.log(`✅ Email sent to ${state.recipient_email}`);
+          emailSent = true;
+        }
       } catch (error) {
-        console.error("Failed to send email:", error);
+        console.error("❌ Failed to send email:", error);
+        if (error instanceof Error) {
+          console.error("Email error details:", error.message);
+        }
         // Continue and return result even if email fails
       }
 
@@ -275,11 +310,11 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
         email: {
           subject: emailSubject,
           body: emailContent.body,
-          sent: true,
+          sent: emailSent,
         },
       };
     } else {
-      console.log("No news items found to send.");
+      console.log("ℹ️  No news items found to send.");
       return newsSearchResult;
     }
   });
@@ -291,10 +326,22 @@ if (typeof require !== "undefined" && require.main === module) {
     try {
       const input = process.argv[2] || "Find the latest tech news";
       console.log(`Running workflow with input: "${input}"`);
+      console.log(`Environment check:`, {
+        hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+        hasSmtpUser: !!process.env.SMTP_USER,
+        hasRecipient: !!process.env.RECIPIENT_EMAIL,
+      });
       const result = await runWorkflow({ input_as_text: input });
       console.log("\nResult:", JSON.stringify(result, null, 2));
+      console.log("\n✅ Workflow completed successfully!");
+      process.exit(0);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("\n❌ Error running workflow:", error);
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        console.error("Error stack:", error.stack);
+      }
+      // Exit with code 1 to indicate failure
       process.exit(1);
     }
   })();
