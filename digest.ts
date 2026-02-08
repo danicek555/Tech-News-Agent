@@ -70,8 +70,8 @@ Quality rules:
 - Prefer trustworthy sources (official blogs/company announcements, respected tech websites, security advisories, research labs).
 - Avoid clickbait and unsubstantiated leaks; if something is speculation, don't include it.
 - Prioritize articles with clear dates and direct links to sources.
-- Each item must have a URL, publisher, and publication date.
-- Summary: max 2 sentences.
+- Each item must have a URL that is the direct source link to the news article (from search results), plus publisher and publication date. Do not include items without a valid URL.
+- Summary: at least 5 sentences under the title.
 - Date: Include the publication date in format YYYY-MM-DD or a relative format like "2 hours ago" if exact date is not available.
 Return maximum ${stateMaxItems} items. If you don't find anything relevant, return items: [] and explain why in notes.
 Output language: ${stateLanguage} (cs = Czech, en = English).
@@ -247,7 +247,7 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
           Topics: ${state.topics}
           Time window: last ${state.recency_hours} hours
           Find and select the most important news and return them in structured JSON format.
-          Make sure to include the publication date for each news item.`,
+          For each item: write at least 5 sentences in the summary, and include the URL source link to the news article. Include the publication date for each news item.`,
             },
           ],
         },
