@@ -75,7 +75,9 @@ Quality rules:
 - Date: Include the publication date in format YYYY-MM-DD or a relative format like "2 hours ago" if exact date is not available.
 Return maximum ${stateMaxItems} items. If you don't find anything relevant, return items: [] and explain why in notes.
 Output language: ${stateLanguage} (cs = Czech, en = English).
-The output must exactly match the JSON schema (no additional text outside JSON).`;
+The output must be exactly one valid JSON object matching the schema (no markdown and no extra text).
+Inside JSON strings do not use raw newlines; use spaces or \\n.
+Ensure every string is properly closed so the JSON is valid.`;
 };
 const techNewsAgent = new Agent<TechNewsContext, typeof TechNewsSchema>({
   name: "Tech News Search Agent",
@@ -86,7 +88,7 @@ const techNewsAgent = new Agent<TechNewsContext, typeof TechNewsSchema>({
   modelSettings: {
     temperature: 1,
     topP: 1,
-    maxTokens: 2048,
+    maxTokens: 16384, // Prevent truncation for long multi-item summaries
     store: true,
   },
 });
@@ -233,34 +235,57 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
         workflow_id: "wf_6907dd0ed33c81909750f7614ad59777020cfeb2f88f3151",
       },
     });
-    const newsSearchResultTemp = await runner.run(
-      techNewsAgent,
-      [
-        ...conversationHistory,
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `User request: {
+    const isStructuredOutputError = (error: unknown): boolean => {
+      if (!(error instanceof Error)) return false;
+      const msg = error.message.toLowerCase();
+      return (
+        msg.includes("invalid output type") ||
+        msg.includes("unterminated string in json")
+      );
+    };
+    const runNewsSearch = async (maxItems: number) => {
+      return await runner.run(
+        techNewsAgent,
+        [
+          ...conversationHistory,
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: `User request: {
           Context:
           Topics: ${state.topics}
           Time window: last ${state.recency_hours} hours
           Find and select the most important news and return them in structured JSON format.
           For each item: write at least 5 sentences in the summary, and include the URL source link to the news article. Include the publication date for each news item.`,
-            },
-          ],
-        },
-      ],
-      {
-        context: {
-          stateRecencyHours: state.recency_hours,
-          stateTopics: state.topics,
-          stateMaxItems: state.max_items,
-          stateLanguage: state.language,
-        },
+              },
+            ],
+          },
+        ],
+        {
+          context: {
+            stateRecencyHours: String(state.recency_hours),
+            stateTopics: state.topics.join(", "),
+            stateMaxItems: String(maxItems),
+            stateLanguage: state.language,
+          },
+        }
+      );
+    };
+    let newsSearchResultTemp;
+    try {
+      newsSearchResultTemp = await runNewsSearch(state.max_items);
+    } catch (error) {
+      if (!isStructuredOutputError(error)) {
+        throw error;
       }
-    );
+      const fallbackMaxItems = Math.max(6, Math.floor(state.max_items / 2));
+      console.warn(
+        `⚠️ Structured output parse failed. Retrying with fewer items (${fallbackMaxItems}).`
+      );
+      newsSearchResultTemp = await runNewsSearch(fallbackMaxItems);
+    }
     conversationHistory.push(
       ...newsSearchResultTemp.newItems.map((item) => item.rawItem)
     );
